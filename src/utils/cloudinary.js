@@ -17,6 +17,9 @@ const uploadOnCloudinary = async (localFilePath) => {
       { resource_type: "auto" }
     );
 
+    // remove the locally saved temporary file as we got cloud url and now no need to store in public dir.
+    if (responseFromCloudinary.url) fs.unlinkSync(localFilePath);
+
     //now return the response object getting form cloudinary
     return responseFromCloudinary;
   } catch (error) {
@@ -27,4 +30,22 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+//
+const deleteOnCloudinary = async (publicId, url) => {
+  try {
+    if (!publicId) return null;
+
+    // delete from cloudinary on the basis of public id
+    const responseFromCloudinary = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image",
+    });
+
+    //now return the response object getting form cloudinary
+    return responseFromCloudinary;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export { uploadOnCloudinary, deleteOnCloudinary };

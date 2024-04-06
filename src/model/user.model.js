@@ -55,7 +55,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.isVerified = async (password) => {
+userSchema.methods.isVerified = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
