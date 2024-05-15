@@ -338,6 +338,76 @@ const userCoverImageUpdate = asyncHandler(async (req, res) => {
     .json(new apiResponse(201, user, "Cover Image updated successfull"));
 });
 
+// Get channel profile of an user
+const getUserChannelProfileDetails = asyncHandler(async (req, res) => {
+  const { username } = param.username;
+
+  if (!username) {
+    throw new apiError(400, "Username not found in param");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: { username: username },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscriberCount: {
+          $size: "$subscribers",
+        },
+        subscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        avatar: 1,
+        email: 1,
+        subscriberCount: 1,
+        subscriberCount: 1,
+        coverImage: 1,
+        isSubscribed: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new apiError(404, "Channel does not exists");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new apiResponse(201, channel[0], "User's channel fetched successfully")
+    );
+});
+
 export {
   userRegister,
   userLogin,
